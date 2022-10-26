@@ -4,15 +4,15 @@ import re, csv, os
 from csv import DictWriter
 import pandas as pd
 import openpyxl
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Font
 
 
-##! NEED TO PULL LICENSE AS WELL 
-""" Need to know if it is the whole lot or not .If it is not the whole lot, then they (juan) needs to go into the lot and get the individual licenses and put the pallets not on the order on hold, so they dont get pulled. If it is the whole """
 
 #! This is the directory where the inventory file is stored 
-inventory_directory = "C:\\Users\\Chris R\\Desktop\\Python Projects\\Mini_Projects\\cdi_reader"  #! Use this at home
+#inventory_directory = "C:\\Users\\Chris R\\Desktop\\Python Projects\\Mini_Projects\\cdi_reader"  #! Use this at home
 ##inventory_directory = "C:\\Users\\crodea\\Desktop\\\Mini_Projects\\cdi_reader"  #! Use this at work 
-#inventory_directory = "C:\\Users\\crodea\\Desktop\\OneDrive\\OneDrive - US Cold Storage\\Python\\CDI_allocations_project" #! One drive folder
+inventory_directory = "C:\\Users\\crodea\\Desktop\\OneDrive\\OneDrive - US Cold Storage\\Python\\CDI_allocations_project" #! One drive folder
 #print(file_directory)
 
 #! This is the inventory file
@@ -20,8 +20,8 @@ inventory_file = "inventory.csv"
 
 
 #!This is the directory that holds the allocation PDF's 
-#path = "C:\\Users\\crodea\\Desktop\\test_allocations"  #! This is the path for work desktop
-path = "C:\\Users\\Chris R\\Desktop\\Python Projects\\Mini_Projects\\cdi_reader\\test_allocations"   #! This is the path at home 
+path = "C:\\Users\\crodea\\Desktop\\test_allocations"  #! This is the path for work desktop
+#path = "C:\\Users\\Chris R\\Desktop\\Python Projects\\Mini_Projects\\cdi_reader\\test_allocations"   #! This is the path at home 
 
 
 #! Open Up file and get the contents of the first page 
@@ -51,15 +51,16 @@ def getOrderNumber(pdf):
 def getPalletId(cdi_pallets):
     pattern = re.compile("\\d\\d\\d\\d-\\d\\d\\d-\\d\\d-[a-zA-Z]\\d\\d-[a-zA-Z]", re.IGNORECASE)
     match = pattern.findall(cdi_pallets)
+    #print(match)
     return match #! Returns a list of pallet ID's ==> ['3822-153-08-S04-B', '6622-153-13-S02-F', '6622-153-13-S03-C', '6622-153-13-S04-B']
 
 #! Gets the quantity that is requested on the CDI order manifest. *NOT* the quantity in inventory
 def getQTY(input):
     pattern = re.compile("(\d+\.0000\s+CS)", re.MULTILINE)
     match = pattern.findall(input) #! Returns ['84.0000\n\n\nCS', '84.0000\n\n\nCS', '84.0000\nCS']
-    
     qty = []
     for items in match:
+        #print(items)
         strip_new_line = items.split("\n") #! Returns ['84.0000', '', '', 'CS']
         add_CS = strip_new_line[0] + " CS" #! Returns 84.0000 CS
         
@@ -102,16 +103,25 @@ def read_from_inventory_csv(number, qty):
     row_info = []
     os.chdir(inventory_directory) #! Change back from the pdf folder.
 
+    # print("Pallet Count is : " + str(len(number[1])))
+    # print("Qty Count is : " + str(len(qty)))
+    Num_of_pallets = len(number[1])
+    Num_of_qty = len(qty)
+    # print(Num_of_pallets)
+    # print(Num_of_qty)
+
     for items in range(len(number)):
         csv_file = csv.reader(open(f"{inventory_file}", "r"), delimiter=",")
         palletID = number[items]
-        qty_requested = qty[items]
+        qty_requested = qty[items] #! Gets the qty from the pdf. If it is blank....
+
+        #* NEED TO CREATE A CONDITIONAL STATEMENT FOR WHEN PALLET ID AND QTY DONT MATCH . 
         #print(number)
         add_comma = "'" + str(palletID) #! Turns 3822-150-05-S01-D into '3822-150-05-S01-D . Because the inventory csv adds a comma in front of PID
         #print(add_comma)
         for row in csv_file:
             #print(number[items])
-            if add_comma == row[13]:        
+            if add_comma == row[13]:
                 #print(row)
                 info = {
                     "Product Code": " ".join(row[2].split()),
@@ -200,6 +210,75 @@ def read_lots_from_csv(lots):
     
     #by_lot = df.groupby(["Lot"]())
 
+def format_and_style(xlsx_file):
+
+    test = xlsx_file.strip('.xlsx')
+    print(test)
+    print(type(test))
+    
+    wb = load_workbook(xlsx_file)
+    #wb = load_workbook(f'{orderNumber}.xlsx')
+    ws = wb.active
+
+    #! Setting the column width
+    ws.column_dimensions['A'].width = 20
+    ws.column_dimensions['B'].width = 20
+    ws.column_dimensions['C'].width = 20
+    ws.column_dimensions['D'].width = 20
+    ws.column_dimensions['E'].width = 20
+    ws.column_dimensions['F'].width = 20
+    ws.column_dimensions['G'].width = 20
+
+    thin = Side(border_style="thin", color="000000")
+    double = Side(border_style="double", color="000000")
+
+    #! Get all the licenses in column 'G' . Add them to a list called 'lice' (short for licenses)
+    for i in range(1, 8): # Go through every other row:
+        cell = ws.cell(row=1, column=i)
+        cell.font = Font(b=True, italic=True)
+        cell.fill = PatternFill("solid", fgColor="d4f4ad")
+        cell.border = Border(top=double, left=thin, right=thin, bottom=double)
+
+    for i in range(len(ws['A'])):
+        cell = ws.cell(row=i+1, column=1)
+        if cell.value == 'Lot':
+            cell.font = Font(b=True, italic=True)
+            cell.fill = PatternFill("solid", fgColor="d4f4ad")
+            cell.border = Border(top=double, left=thin, right=thin, bottom=double)
+            cell = ws.cell(row=i+1, column=2)
+            cell.font = Font(b=True, italic=True)
+            cell.fill = PatternFill("solid", fgColor="d4f4ad")
+            cell.border = Border(top=double, left=thin, right=thin, bottom=double)
+            cell = ws.cell(row=i+1, column=3)
+            cell.font = Font(b=True, italic=True)
+            cell.fill = PatternFill("solid", fgColor="d4f4ad")
+            cell.border = Border(top=double, left=thin, right=thin, bottom=double)      
+            
+            
+            # print(cell)
+            # print(cell.value)
+
+
+
+    lice = []
+    for c in ws['G']:
+        if c.value != None and c.value != 'License Number':
+            #print(c.value)
+            c.font = Font(b=True, italic=True)
+            lice.append(c.value)
+
+    #! Search through column 'C' for rows that have any of the values in the 'lice' list
+    for f in ws['C']:
+        #print(f.value)
+        if f.value in lice:
+            #print(f.value)
+            #print("---")
+            f.font = Font(b=True, color="FF0000", italic=True)
+            f.fill = PatternFill("solid", fgColor="88f208")
+
+
+    #wb.save("styled.xlsx")
+    wb.save(f'{test}.xlsx')
 
 
 def main():
@@ -263,8 +342,13 @@ def main():
             for row in reader:
                 ws.append(row)
 
+        #! Saves the file without formatting 
         wb.save(f'{orderNumber}.xlsx')
+        #wb.save("C:\\Users\\crodea\\Desktop\\Completed_CDI\\f'{orderNumber}.xlsx'")
+
+        #! This adds the border, font color, etc to the .xlsx sheet that is created
+        format_and_style(f'{orderNumber}.xlsx')
+
 
 
 main()
-
