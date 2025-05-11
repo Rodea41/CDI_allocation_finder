@@ -1,4 +1,4 @@
-<img src="[https://github.com/Rodea41/Machine-Learning-Algorithms/blob/main/img.jpg](https://raw.githubusercontent.com/Rodea41/CDI_allocation_finder/refs/heads/main/butter.webp)" width="1000" height="500" />
+<img src="[https://github.com/Rodea41/Machine-Learning-Algorithms/blob/main/img.jpg](https://github.com/Rodea41/CDI_allocation_finder/refs/heads/main/butter.webp)" width="1000" height="500" />
 
 
 # CDI Inventory Reader
