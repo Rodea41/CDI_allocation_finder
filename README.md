@@ -1,4 +1,4 @@
-<img src="https://github.com/Rodea41/CDI_allocation_finder/blob/main/butter.webp" width="1000" height="500" />
+<img src="https://github.com/Rodea41/CDI_allocation_finder/blob/main/butter.webp" width="1000" height="400" />
 
 
 # CDI Inventory Reader
